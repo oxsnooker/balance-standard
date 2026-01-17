@@ -48,25 +48,15 @@ export default function AuthRedirect() {
       return;
     }
 
-    // User is logged in
-    if (isAdmin) {
-      // Admin user
-      const isAdminArea = pathname.startsWith('/admin');
-      const isTransactionsArea = pathname.startsWith('/transactions');
-      if (!isAdminArea && !isTransactionsArea) {
-        router.push('/admin');
-      }
-    } else {
-      // Regular user
-      const isTransactionsPage = pathname.startsWith('/transactions/');
-      const isOwnTransactionsPage = pathname === `/transactions/${user.uid}`;
-      const isAdminArea = pathname.startsWith('/admin');
+    // User is logged in, redirect from auth/public pages to dashboard
+    if (onAuthPage || onPublicPage) {
+      router.push('/dashboard');
+      return;
+    }
 
-      if (isAdminArea || (isTransactionsPage && !isOwnTransactionsPage)) {
-         router.push(`/transactions/${user.uid}`);
-      } else if (onAuthPage || onPublicPage) {
-         router.push(`/transactions/${user.uid}`);
-      }
+    // If a non-admin tries to access admin pages, redirect to dashboard
+    if (!isAdmin && pathname.startsWith('/admin')) {
+        router.push('/dashboard');
     }
 
   }, [user, isLoading, currentUserData, router, pathname]);
