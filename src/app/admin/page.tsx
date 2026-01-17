@@ -7,7 +7,6 @@ import {
   useDoc,
   useMemoFirebase,
 } from "@/firebase";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc } from "firebase/firestore";
 import Link from "next/link";
 import {
@@ -25,14 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
@@ -49,7 +40,6 @@ interface UserAccount {
 export default function AdminPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
@@ -68,20 +58,6 @@ export default function AdminPage() {
     useCollection<UserAccount>(usersCollectionRef);
 
   const isAdmin = currentUserData?.role === "admin";
-
-  const handleRoleChange = (userId: string, newRole: "admin" | "user") => {
-    if (!user || userId === user.uid) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You cannot change your own role.",
-      });
-      return;
-    }
-    const userDocToUpdateRef = doc(firestore, "users", userId);
-    updateDocumentNonBlocking(userDocToUpdateRef, { role: newRole });
-    toast({ title: "Success", description: `User role updated to ${newRole}.` });
-  };
 
   if (isCurrentUserLoading) {
     return (
@@ -167,7 +143,6 @@ export default function AdminPage() {
                          <div className="flex gap-2 justify-end">
                             <Skeleton className="h-8 w-28" />
                             <Skeleton className="h-8 w-28" />
-                            <Skeleton className="h-8 w-24" />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -192,21 +167,6 @@ export default function AdminPage() {
                           </Link>
                         </Button>
                          <UpdateBalanceDialog userId={u.id} userEmail={u.displayName || u.email} />
-                        <Select
-                          defaultValue={u.role}
-                          onValueChange={(value: "admin" | "user") =>
-                            handleRoleChange(u.id, value)
-                          }
-                          disabled={u.id === user?.uid}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Change role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                     </TableCell>
                   </TableRow>
