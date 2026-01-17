@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { KeyRound } from "lucide-react";
+import { useAuth } from "@/firebase";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { resetPassword } from "@/actions/auth";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -33,7 +34,10 @@ const formSchema = z.object({
 export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [message, setMessage] = useState("");
+  const auth = useAuth();
+  const [message, setMessage] = useState(
+    "If an account with this email exists, a password reset link has been sent."
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,15 +48,15 @@ export default function ForgotPasswordPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const formData = new FormData();
-    formData.append("email", values.email);
-
-    const result = await resetPassword(null, formData);
-
-    setLoading(false);
-    setSubmitted(true);
-    if (result?.message) {
-      setMessage(result.message);
+    form.clearErrors();
+    try {
+      await sendPasswordResetEmail(auth, values.email);
+      setSubmitted(true);
+    } catch (error) {
+      // Don't show specific errors to prevent email enumeration
+      setSubmitted(true); // Still show success message
+    } finally {
+      setLoading(false);
     }
   }
 

@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserPlus } from "lucide-react";
+import { createUserWithEmailAndPassword, AuthError } from "firebase/auth";
+import { useAuth } from "@/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signup } from "@/actions/auth";
 
 const formSchema = z
   .object({
@@ -41,6 +42,7 @@ const formSchema = z
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,11 +55,22 @@ export default function SignupPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("password", values.password);
-
-    await signup(null, formData);
+    form.clearErrors();
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      // Redirect is handled by AuthRedirect component
+    } catch (error) {
+      const authError = error as AuthError;
+      let errorMessage = "An unexpected error occurred.";
+      if (authError.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already in use.";
+      }
+      form.setError("root.serverError", {
+        type: authError.code,
+        message: errorMessage,
+      });
+      setLoading(false);
+    }
   }
 
   return (
@@ -75,6 +88,11 @@ export default function SignupPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {form.formState.errors.root?.serverError && (
+                <FormMessage>
+                  {form.formState.errors.root.serverError.message}
+                </FormMessage>
+              )}
               <FormField
                 control={form.control}
                 name="email"

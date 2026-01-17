@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { login } from "@/actions/auth";
+import { useAuth } from "@/firebase";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -34,6 +34,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,11 +46,26 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("password", values.password);
-
-    await login(null, formData);
+    form.clearErrors();
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // Redirect is handled by AuthRedirect component
+    } catch (error) {
+      const authError = error as AuthError;
+      let errorMessage = "An unexpected error occurred.";
+      if (
+        authError.code === "auth/user-not-found" ||
+        authError.code === "auth/wrong-password" ||
+        authError.code === "auth/invalid-credential"
+      ) {
+        errorMessage = "Invalid email or password.";
+      }
+      form.setError("root.serverError", {
+        type: authError.code,
+        message: errorMessage,
+      });
+      setLoading(false);
+    }
   }
 
   return (
@@ -67,6 +83,11 @@ export default function LoginPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {form.formState.errors.root?.serverError && (
+                <FormMessage>
+                  {form.formState.errors.root.serverError.message}
+                </FormMessage>
+              )}
               <FormField
                 control={form.control}
                 name="email"
