@@ -107,7 +107,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome back, {currentUserData?.email || "user"}!
+          Welcome back, {currentUserData?.displayName || currentUserData?.email || "user"}!
         </p>
       </div>
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
               ) : (
                 displayUsers?.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.email}</TableCell>
+                    <TableCell className="font-medium">{u.displayName || u.email}</TableCell>
                     <TableCell className="text-right font-mono">
                       ${(u.balance || 0).toFixed(2)}
                     </TableCell>

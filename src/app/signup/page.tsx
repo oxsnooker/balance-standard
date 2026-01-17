@@ -6,7 +6,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserPlus } from "lucide-react";
-import { createUserWithEmailAndPassword, AuthError } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  AuthError,
+} from "firebase/auth";
 import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 
@@ -30,6 +34,7 @@ import { Input } from "@/components/ui/input";
 
 const formSchema = z
   .object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email." }),
     password: z
       .string()
@@ -49,6 +54,7 @@ export default function SignupPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -66,12 +72,14 @@ export default function SignupPage() {
       );
       const user = userCredential.user;
       if (user) {
+        await updateProfile(user, { displayName: values.name });
         const userDocRef = doc(firestore, "users", user.uid);
         setDocumentNonBlocking(
           userDocRef,
           {
             id: user.uid,
             email: user.email,
+            displayName: values.name,
             registrationDate: new Date().toISOString(),
             role: "user",
             balance: 0,
@@ -114,6 +122,23 @@ export default function SignupPage() {
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>
               )}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John Doe"
+                        {...field}
+                        disabled={loading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"

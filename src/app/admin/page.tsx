@@ -41,6 +41,7 @@ interface UserAccount {
   role: "admin" | "user";
   registrationDate: string;
   balance: number;
+  displayName?: string;
 }
 
 export default function AdminPage() {
@@ -136,7 +137,7 @@ export default function AdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Email</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Registered On</TableHead>
@@ -172,7 +173,7 @@ export default function AdminPage() {
               ) : (
                 users?.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.email}</TableCell>
+                    <TableCell className="font-medium">{u.displayName || u.email}</TableCell>
                     <TableCell className="text-muted-foreground">${(u.balance || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {u.role}
@@ -182,7 +183,7 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                         <UpdateBalanceDialog userId={u.id} userEmail={u.email} />
+                         <UpdateBalanceDialog userId={u.id} userEmail={u.displayName || u.email} />
                         <Select
                           defaultValue={u.role}
                           onValueChange={(value: "admin" | "user") =>

@@ -15,6 +15,10 @@
           "description": "The user's email address.",
           "format": "email"
         },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
         "registrationDate": {
           "type": "string",
           "description": "The date and time when the user registered.",
