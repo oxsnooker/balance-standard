@@ -74,6 +74,7 @@ export default function SignupPage() {
             email: user.email,
             registrationDate: new Date().toISOString(),
             role: "user",
+            balance: 0,
           },
           { merge: true }
         );

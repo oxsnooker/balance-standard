@@ -71,17 +71,19 @@ service cloud.firestore {
 
     /**
      * On create, validates that the UserAccount document's internal 'id'
-     * field matches the document's ID in the path ({userId}).
+     * field matches the document's ID in the path ({userId}) and that a balance is provided.
      */
     function hasValidUserAccountDataOnCreate(userId) {
-      return request.resource.data.id == userId;
+      return request.resource.data.id == userId
+        && 'balance' in request.resource.data && request.resource.data.balance is number;
     }
 
     /**
-     * On update, ensures the UserAccount's 'id' field cannot be changed.
+     * On update, ensures the UserAccount's 'id' and 'role' fields cannot be changed by the owner.
      */
     function isUserAccountImmutableOnUpdate() {
-      return request.resource.data.id == resource.data.id;
+      return request.resource.data.id == resource.data.id
+        && request.resource.data.role == resource.data.role;
     }
     
     /**

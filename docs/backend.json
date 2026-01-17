@@ -33,13 +33,18 @@
           "type": "string",
           "description": "The user's role in the application.",
           "enum": ["admin", "user"]
+        },
+        "balance": {
+          "type": "number",
+          "description": "The user's account balance."
         }
       },
       "required": [
         "id",
         "email",
         "registrationDate",
-        "role"
+        "role",
+        "balance"
       ]
     },
     "UserProfile": {
