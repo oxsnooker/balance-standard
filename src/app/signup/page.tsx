@@ -7,7 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserPlus } from "lucide-react";
 import { createUserWithEmailAndPassword, AuthError } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ const formSchema = z
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,7 +59,25 @@ export default function SignupPage() {
     setLoading(true);
     form.clearErrors();
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password
+      );
+      const user = userCredential.user;
+      if (user) {
+        const userDocRef = doc(firestore, "users", user.uid);
+        setDocumentNonBlocking(
+          userDocRef,
+          {
+            id: user.uid,
+            email: user.email,
+            registrationDate: new Date().toISOString(),
+            role: "user",
+          },
+          { merge: true }
+        );
+      }
       // Redirect is handled by AuthRedirect component
     } catch (error) {
       const authError = error as AuthError;

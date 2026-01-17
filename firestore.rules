@@ -61,6 +61,15 @@ service cloud.firestore {
     }
 
     /**
+     * Checks if the requesting user is an admin.
+     */
+    function isAdmin() {
+      return isSignedIn() 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    /**
      * On create, validates that the UserAccount document's internal 'id'
      * field matches the document's ID in the path ({userId}).
      */
@@ -90,6 +99,13 @@ service cloud.firestore {
     function isUserProfileImmutableOnUpdate() {
       return request.resource.data.userAccountId == resource.data.userAccountId;
     }
+    
+    /**
+     * Checks if an admin is only updating the 'role' field.
+     */
+    function isUpdatingOnlyRoleByAdmin() {
+      return isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+    }
 
     //-------------------------------------------------------------------------
     // Collection Rules
@@ -105,11 +121,11 @@ service cloud.firestore {
      * @principle Restricts access to a user's own data tree and prevents user enumeration.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isOwner(userId) && hasValidUserAccountDataOnCreate(userId);
-      allow update: if isExistingOwner(userId) && isUserAccountImmutableOnUpdate();
-      allow delete: if isExistingOwner(userId);
+      allow update: if (isOwner(userId) && isUserAccountImmutableOnUpdate()) || isUpdatingOnlyRoleByAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
 
       /**
        * @description Controls access to a user's profile documents.

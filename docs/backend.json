@@ -28,12 +28,18 @@
         "profileId": {
           "type": "string",
           "description": "Reference to UserProfile. (Relationship: UserAccount 1:1 UserProfile)"
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the application.",
+          "enum": ["admin", "user"]
         }
       },
       "required": [
         "id",
         "email",
-        "registrationDate"
+        "registrationDate",
+        "role"
       ]
     },
     "UserProfile": {
