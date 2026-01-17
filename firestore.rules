@@ -126,7 +126,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) && hasValidUserAccountDataOnCreate(userId);
-      allow update: if (isOwner(userId) && isUserAccountImmutableOnUpdate()) || isUpdatingOnlyRoleByAdmin();
+      allow update: if (isOwner(userId) && isUserAccountImmutableOnUpdate()) || isUpdatingOnlyRoleByAdmin() || (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance']));
       allow delete: if isOwner(userId) || isAdmin();
 
       /**
@@ -144,6 +144,22 @@ service cloud.firestore {
         allow create: if isOwner(userId) && hasValidUserProfileDataOnCreate(userId);
         allow update: if isExistingOwner(userId) && isUserProfileImmutableOnUpdate();
         allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Controls access to a user's transaction history.
+       * @path /users/{userId}/transactions/{transactionId}
+       * @allow (list) An authenticated user can list their own transactions, and admins can list any.
+       * @allow (create) An admin can create a transaction for any user.
+       * @deny (update, delete) Transactions are immutable records.
+       * @principle Allows admins to manage balances while providing users read-only access to their history.
+       */
+      match /transactions/{transactionId} {
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if isAdmin();
+        allow update: if false;
+        allow delete: if false;
       }
     }
   }

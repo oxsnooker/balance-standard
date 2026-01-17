@@ -83,6 +83,46 @@
         "id",
         "displayName"
       ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a single balance transaction for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of transaction.",
+          "enum": [
+            "balance",
+            "payment"
+          ]
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the transaction."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the transaction."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time of the transaction.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "amount",
+        "description",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -128,8 +168,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction history for a user. Admins can create transactions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user account."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier of the transaction."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support user authentication and profile management for the AuthConnect application. It prioritizes security and scalability by adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. \n\nAuthorization Independence is achieved by storing user data directly under the `/users/{userId}` collection. This eliminates the need for complex `get()` calls in security rules, allowing for atomic operations and easier debugging. This is enforced through path-based ownership, ensuring that each user can only access their own data.\n\nStructural Segregation is maintained by separating user accounts and user profiles into dedicated collections (`/users` and `/users/{userId}/profiles`). This ensures a homogeneous security posture, where all documents within a collection share the same security requirements.\n\nThe structure supports the required QAPs by using path-based ownership for private user data. List operations are secure because rules only allow access to a user's own profile based on their `uid`."
+    "reasoning": "This Firestore structure is designed to support user authentication and profile management for the AuthConnect application. It prioritizes security and scalability by adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. \n\nAuthorization Independence is achieved by storing user data directly under the `/users/{userId}` collection. This eliminates the need for complex `get()` calls in security rules, allowing for atomic operations and easier debugging. This is enforced through path-based ownership, ensuring that each user can only access their own data.\n\nStructural Segregation is maintained by separating user accounts and user profiles into dedicated collections (`/users` and `/users/{userId}/profiles`). This ensures a homogeneous security posture, where all documents within a collection share the same security requirements. A `transactions` subcollection is added to log all balance modifications for auditing purposes.\n\nThe structure supports the required QAPs by using path-based ownership for private user data. List operations are secure because rules only allow access to a user's own profile based on their `uid`."
   }
 }

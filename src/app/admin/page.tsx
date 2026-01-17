@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
 
 interface UserAccount {
   id: string;
@@ -160,7 +161,10 @@ export default function AdminPage() {
                         <Skeleton className="h-4 w-32" />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Skeleton className="h-8 w-24 ml-auto" />
+                         <div className="flex gap-2 justify-end">
+                            <Skeleton className="h-8 w-28" />
+                            <Skeleton className="h-8 w-24" />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -176,22 +180,25 @@ export default function AdminPage() {
                      <TableCell className="text-muted-foreground">
                       {new Date(u.registrationDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Select
-                        defaultValue={u.role}
-                        onValueChange={(value: "admin" | "user") =>
-                          handleRoleChange(u.id, value)
-                        }
-                        disabled={u.id === user?.uid}
-                      >
-                        <SelectTrigger className="w-[120px] ml-auto">
-                          <SelectValue placeholder="Change role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                         <UpdateBalanceDialog userId={u.id} userEmail={u.email} />
+                        <Select
+                          defaultValue={u.role}
+                          onValueChange={(value: "admin" | "user") =>
+                            handleRoleChange(u.id, value)
+                          }
+                          disabled={u.id === user?.uid}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Change role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
