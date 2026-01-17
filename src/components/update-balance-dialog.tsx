@@ -30,20 +30,31 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  type: z.enum(["balance", "payment"], {
-    required_error: "You need to select a transaction type.",
-  }),
-  amount: z.coerce.number().positive({ message: "Amount must be positive." }),
-  description: z.string().min(1, { message: "Description is required." }),
-});
+const formSchema = z
+  .object({
+    type: z.enum(["balance", "payment"], {
+      required_error: "You need to select a transaction type.",
+    }),
+    amount: z.coerce.number().positive({ message: "Amount must be positive." }),
+    description: z.string().min(1, { message: "Description is required." }),
+    password: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.type === "payment") {
+        return data.password === "1234";
+      }
+      return true;
+    },
+    {
+      message: "Incorrect password for payment transaction.",
+      path: ["password"],
+    }
+  );
 
 interface UpdateBalanceDialogProps {
   userId: string;
@@ -65,8 +76,11 @@ export function UpdateBalanceDialog({
       type: "balance",
       amount: 0,
       description: "",
+      password: "",
     },
   });
+
+  const transactionType = form.watch("type");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -74,7 +88,12 @@ export function UpdateBalanceDialog({
     const amountToUpdate = type === "balance" ? amount : -amount;
 
     const userDocRef = doc(firestore, "users", userId);
-    const transactionColRef = collection(firestore, "users", userId, "transactions");
+    const transactionColRef = collection(
+      firestore,
+      "users",
+      userId,
+      "transactions"
+    );
 
     try {
       // Update balance
@@ -121,7 +140,7 @@ export function UpdateBalanceDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="type"
@@ -157,6 +176,26 @@ export function UpdateBalanceDialog({
               )}
             />
 
+            {transactionType === "payment" && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter password to confirm payment"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="amount"
@@ -178,7 +217,10 @@ export function UpdateBalanceDialog({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Monthly subscription" {...field} />
+                    <Textarea
+                      placeholder="e.g., Monthly subscription"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
