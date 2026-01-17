@@ -7,6 +7,7 @@ import { Skeleton } from './ui/skeleton';
 
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 const PUBLIC_PAGES = ['/'];
+const DEPRECATED_PAGES = ['/dashboard'];
 
 function isAuthPage(pathname: string) {
     return AUTH_PAGES.includes(pathname);
@@ -14,6 +15,10 @@ function isAuthPage(pathname: string) {
 
 function isPublicPage(pathname: string) {
     return PUBLIC_PAGES.includes(pathname);
+}
+
+function isDeprecatedPage(pathname: string) {
+    return DEPRECATED_PAGES.includes(pathname);
 }
 
 
@@ -27,10 +32,11 @@ export default function AuthRedirect() {
 
     const onAuthPage = isAuthPage(pathname);
     const onPublicPage = isPublicPage(pathname);
+    const onDeprecatedPage = isDeprecatedPage(pathname);
 
     if (user) { // If user is logged in
-        if (onAuthPage || onPublicPage) {
-            router.push('/dashboard');
+        if (onAuthPage || onPublicPage || onDeprecatedPage) {
+            router.push(`/transactions/${user.uid}`);
         }
     } else { // If user is not logged in
         if (!onAuthPage && !onPublicPage) {

@@ -141,12 +141,14 @@ export default function TransactionHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="outline" size="sm">
-        <Link href="/dashboard">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </Button>
+      {isAdmin && currentUser?.uid !== userId && (
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Admin
+          </Link>
+        </Button>
+      )}
 
       <Card>
         <CardHeader>
