@@ -52,7 +52,8 @@ export default function AuthRedirect() {
     if (isAdmin) {
       // Admin user
       const isAdminArea = pathname.startsWith('/admin');
-      if (!isAdminArea) {
+      const isTransactionsArea = pathname.startsWith('/transactions');
+      if (!isAdminArea && !isTransactionsArea) {
         router.push('/admin');
       }
     } else {
