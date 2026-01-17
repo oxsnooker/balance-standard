@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
 
 interface UserAccount {
   id: string;
@@ -57,8 +58,12 @@ export default function DashboardPage() {
     useCollection<UserAccount>(usersCollectionRef);
 
   const isAdmin = currentUserData?.role === "admin";
-  
-  const displayUsers = isAdmin ? users : (currentUserData ? [currentUserData] : []);
+
+  const displayUsers = isAdmin
+    ? users
+    : currentUserData
+    ? [currentUserData]
+    : [];
   const isLoading = isCurrentUserLoading || (isAdmin && areUsersLoading);
 
   if (isLoading && !displayUsers?.length) {
@@ -78,7 +83,8 @@ export default function DashboardPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead>Balance</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,9 +93,14 @@ export default function DashboardPage() {
                     <TableCell>
                       <Skeleton className="h-4 w-40" />
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="h-4 w-20 ml-auto" />
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <Skeleton className="h-8 w-28 ml-auto" />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -107,7 +118,8 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome back, {currentUserData?.displayName || currentUserData?.email || "user"}!
+          Welcome back,{" "}
+          {currentUserData?.displayName || currentUserData?.email || "user"}!
         </p>
       </div>
 
@@ -125,7 +137,10 @@ export default function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
+                <TableHead className={!isAdmin ? "text-right" : ""}>
+                  Balance
+                </TableHead>
+                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -136,19 +151,44 @@ export default function DashboardPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-40" />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-4 w-20 ml-auto" />
+                      <TableCell
+                        className={!isAdmin ? "text-right" : ""}
+                      >
+                        <Skeleton
+                          className={
+                            isAdmin ? "h-4 w-24" : "h-4 w-20 ml-auto"
+                          }
+                        />
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <Skeleton className="h-8 w-28 ml-auto" />
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </>
               ) : (
                 displayUsers?.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.displayName || u.email}</TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell className="font-medium">
+                      {u.displayName || u.email}
+                    </TableCell>
+                    <TableCell
+                      className={
+                        isAdmin ? "text-muted-foreground" : "text-right font-mono"
+                      }
+                    >
                       ${(u.balance || 0).toFixed(2)}
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <UpdateBalanceDialog
+                          userId={u.id}
+                          userEmail={u.displayName || u.email}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
