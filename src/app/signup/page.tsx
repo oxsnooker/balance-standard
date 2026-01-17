@@ -31,6 +31,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const formSchema = z
   .object({
@@ -47,6 +55,10 @@ const formSchema = z
   });
 
 export default function SignupPage() {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [authError, setAuthError] = useState("");
+
   const [loading, setLoading] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
@@ -60,6 +72,14 @@ export default function SignupPage() {
       confirmPassword: "",
     },
   });
+
+  const handlePasswordCheck = () => {
+    if (passwordInput === "Afzalafu76@") {
+      setIsAuthorized(true);
+    } else {
+      setAuthError("Incorrect password.");
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -100,6 +120,43 @@ export default function SignupPage() {
       });
       setLoading(false);
     }
+  }
+
+  if (!isAuthorized) {
+    return (
+      <main className="flex min-h-screen w-full items-center justify-center p-4">
+        <Dialog open={true}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Protected Page</DialogTitle>
+              <DialogDescription>
+                Please enter the password to access the signup page.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handlePasswordCheck();
+                  }
+                }}
+              />
+              {authError && (
+                <p className="text-sm text-destructive">{authError}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={handlePasswordCheck}>Submit</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </main>
+    );
   }
 
   return (
