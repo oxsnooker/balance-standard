@@ -154,11 +154,11 @@ export default function TransactionHistoryPage() {
             {targetUser?.displayName || targetUser?.email}
           </CardTitle>
           <CardDescription>
-            Current Balance:{" "}
-            <span className="font-bold text-foreground">
-              ₹{(targetUser?.balance || 0).toFixed(2)}
-            </span>
+            Current Balance
           </CardDescription>
+          <div className="text-3xl font-bold text-accent">
+            ₹{(targetUser?.balance || 0).toFixed(2)}
+          </div>
         </CardHeader>
       </Card>
 
