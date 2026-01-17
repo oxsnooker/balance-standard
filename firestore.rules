@@ -1,0 +1,132 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model.
+ * All data is scoped to a specific user, and an authenticated user can only
+ * access or modify their own data tree. This approach ensures strong privacy
+ * and security by default.
+ *
+ * Data Structure: The data is organized hierarchically. A top-level 'users'
+ * collection holds individual user account documents, identified by their
+ * Firebase Authentication UID. All other user-specific data, such as their
+ * profile, is stored in subcollections under their main document (e.g.,
+ * /users/{userId}/profiles/{profileId}).
+ *
+ * Key Security Decisions:
+ * - User data is private: Access to any document within the /users/{userId}
+ *   path is restricted to the authenticated user whose UID matches {userId}.
+ * - User listing is disallowed: It is not possible for any user, authenticated
+ *   or not, to list all documents in the top-level 'users' collection.
+ * - Relational Integrity: On creation, documents must contain an ID field
+ *   (e.g., 'id' or 'userAccountId') that correctly links them to the user
+ *   ID in their path. These linking fields are immutable once created.
+ *
+ * Denormalization for Authorization: The structure uses the user's UID as the
+ * document ID in the path (/users/{userId}). This is a fundamental security
+ * pattern that makes authorization checks fast and simple, avoiding costly
+ * 'get' calls to other documents for ownership verification.
+ *
+ * Structural Segregation: User account data (UserAccount) and profile data
+ * (UserProfile) are stored in separate collections, ensuring that a single,
+ * clear security posture (user ownership) can be applied to all documents
+ * within a given collection path.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    //-------------------------------------------------------------------------
+    // Helper Functions
+    //-------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the given userId.
+     * This is the primary function for enforcing user ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Checks if a document exists and if the current user is its owner.
+     * Used for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * On create, validates that the UserAccount document's internal 'id'
+     * field matches the document's ID in the path ({userId}).
+     */
+    function hasValidUserAccountDataOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * On update, ensures the UserAccount's 'id' field cannot be changed.
+     */
+    function isUserAccountImmutableOnUpdate() {
+      return request.resource.data.id == resource.data.id;
+    }
+    
+    /**
+     * On create, validates that the UserProfile's 'userAccountId' field
+     * correctly references the parent user document.
+     */
+    function hasValidUserProfileDataOnCreate(userId) {
+      return request.resource.data.userAccountId == userId;
+    }
+    
+    /**
+     * On update, ensures the UserProfile's link to its parent user
+     * ('userAccountId') cannot be changed.
+     */
+    function isUserProfileImmutableOnUpdate() {
+      return request.resource.data.userAccountId == resource.data.userAccountId;
+    }
+
+    //-------------------------------------------------------------------------
+    // Collection Rules
+    //-------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to a user's primary account document.
+     * @path /users/{userId}
+     * @allow (get) An authenticated user can read their own account document. `auth.uid: "user_abc", path: "/users/user_abc"`
+     * @allow (create) An authenticated user can create their own account document. `auth.uid: "user_abc", path: "/users/user_abc"`
+     * @deny (list) No user can list all documents in the 'users' collection. `auth.uid: "user_abc", path: "/users"`
+     * @deny (update) A user cannot update another user's account. `auth.uid: "user_xyz", path: "/users/user_abc"`
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserAccountDataOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isUserAccountImmutableOnUpdate();
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Controls access to a user's profile documents.
+       * @path /users/{userId}/profiles/{profileId}
+       * @allow (list) An authenticated user can list their own profiles. `auth.uid: "user_abc", path: "/users/user_abc/profiles"`
+       * @allow (create) An authenticated user can create a profile for themselves. `auth.uid: "user_abc", path: "/users/user_abc/profiles/profile_123"`
+       * @deny (get) A user cannot read another user's profile. `auth.uid: "user_xyz", path: "/users/user_abc/profiles/profile_123"`
+       * @deny (create) A user cannot create a profile for another user. `auth.uid: "user_xyz", path: "/users/user_abc/profiles/profile_123"`
+       * @principle Enforces document ownership based on the parent path segment ({userId}).
+       */
+      match /profiles/{profileId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidUserProfileDataOnCreate(userId);
+        allow update: if isExistingOwner(userId) && isUserProfileImmutableOnUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
