@@ -177,7 +177,7 @@ export default function AdminPage() {
                 users?.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.displayName || u.email}</TableCell>
-                    <TableCell className="text-muted-foreground">${(u.balance || 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-accent">${(u.balance || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {u.role}
                     </TableCell>

@@ -170,7 +170,7 @@ export default function DashboardPage() {
                     <TableCell className="font-medium">
                       {u.displayName || u.email}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="font-semibold text-accent">
                       ${(u.balance || 0).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
