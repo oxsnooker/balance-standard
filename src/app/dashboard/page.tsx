@@ -8,6 +8,8 @@ import {
   useMemoFirebase,
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -84,23 +86,24 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Balance</TableHead>
-                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {[...Array(3)].map((_, i) => (
+                {[...Array(isAdmin ? 3 : 1)].map((_, i) => (
                   <TableRow key={i}>
                     <TableCell>
                       <Skeleton className="h-4 w-40" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24" />
                     </TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-right">
-                        <Skeleton className="h-8 w-28 ml-auto" />
-                      </TableCell>
-                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <Skeleton className="h-8 w-28" />
+                        {isAdmin && <Skeleton className="h-8 w-28" />}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -137,10 +140,8 @@ export default function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead className={!isAdmin ? "text-right" : ""}>
-                  Balance
-                </TableHead>
-                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                <TableHead>Balance</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,20 +152,15 @@ export default function DashboardPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-40" />
                       </TableCell>
-                      <TableCell
-                        className={!isAdmin ? "text-right" : ""}
-                      >
-                        <Skeleton
-                          className={
-                            isAdmin ? "h-4 w-24" : "h-4 w-20 ml-auto"
-                          }
-                        />
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
                       </TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right">
-                          <Skeleton className="h-8 w-28 ml-auto" />
-                        </TableCell>
-                      )}
+                      <TableCell className="text-right">
+                        <div className="flex justify-end items-center gap-2">
+                           <Skeleton className="h-8 w-28" />
+                           {isAdmin && <Skeleton className="h-8 w-28" />}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </>
@@ -174,21 +170,24 @@ export default function DashboardPage() {
                     <TableCell className="font-medium">
                       {u.displayName || u.email}
                     </TableCell>
-                    <TableCell
-                      className={
-                        isAdmin ? "text-muted-foreground" : "text-right font-mono"
-                      }
-                    >
+                    <TableCell className="text-muted-foreground">
                       ${(u.balance || 0).toFixed(2)}
                     </TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-right">
-                        <UpdateBalanceDialog
-                          userId={u.id}
-                          userEmail={u.displayName || u.email}
-                        />
-                      </TableCell>
-                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/transactions/${u.id}`}>
+                            Transactions
+                          </Link>
+                        </Button>
+                        {isAdmin && (
+                          <UpdateBalanceDialog
+                            userId={u.id}
+                            userEmail={u.displayName || u.email}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}

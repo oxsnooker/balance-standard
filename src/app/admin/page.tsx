@@ -9,6 +9,7 @@ import {
 } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc } from "firebase/firestore";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
 
 interface UserAccount {
@@ -164,6 +166,7 @@ export default function AdminPage() {
                       <TableCell className="text-right">
                          <div className="flex gap-2 justify-end">
                             <Skeleton className="h-8 w-28" />
+                            <Skeleton className="h-8 w-28" />
                             <Skeleton className="h-8 w-24" />
                         </div>
                       </TableCell>
@@ -183,6 +186,11 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/transactions/${u.id}`}>
+                            Transactions
+                          </Link>
+                        </Button>
                          <UpdateBalanceDialog userId={u.id} userEmail={u.displayName || u.email} />
                         <Select
                           defaultValue={u.role}
