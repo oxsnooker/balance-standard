@@ -57,20 +57,43 @@ export default function DashboardPage() {
     useCollection<UserAccount>(usersCollectionRef);
 
   const isAdmin = currentUserData?.role === "admin";
+  
+  const displayUsers = isAdmin ? users : (currentUserData ? [currentUserData] : []);
+  const isLoading = isCurrentUserLoading || (isAdmin && areUsersLoading);
 
-  if (isCurrentUserLoading) {
+  if (isLoading && !displayUsers?.length) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-1/4" />
-        <Skeleton className="h-4 w-1/2" />
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+        </div>
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-1/5" />
+            <Skeleton className="mt-2 h-4 w-2/5" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...Array(3)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-40" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-4 w-20 ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
@@ -87,62 +110,52 @@ export default function DashboardPage() {
           Welcome back, {currentUserData?.email || "user"}!
         </p>
       </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Your Balance</CardTitle>
+          <CardTitle>User Balances</CardTitle>
+          <CardDescription>
+            {isAdmin
+              ? "An overview of all user balances in the system."
+              : "Your current account balance."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold">
-            ${currentUserData?.balance?.toFixed(2) ?? "0.00"}
-          </p>
-        </CardContent>
-      </Card>
-
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>All User Balances</CardTitle>
-            <CardDescription>
-              An overview of all user balances in the system.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {areUsersLoading ? (
-                  <>
-                    {[...Array(3)].map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-40" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="h-4 w-20 ml-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </>
-                ) : (
-                  users?.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.email}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        ${(u.balance || 0).toFixed(2)}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <>
+                  {[...Array(isAdmin ? 3 : 1)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-40" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-4 w-20 ml-auto" />
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                  ))}
+                </>
+              ) : (
+                displayUsers?.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.email}</TableCell>
+                    <TableCell className="text-right font-mono">
+                      ${(u.balance || 0).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
