@@ -171,7 +171,7 @@ export default function DashboardPage() {
                       {u.displayName || u.email}
                     </TableCell>
                     <TableCell className="font-semibold text-accent">
-                      ${(u.balance || 0).toFixed(2)}
+                      ₹{(u.balance || 0).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-2">

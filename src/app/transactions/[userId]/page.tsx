@@ -156,7 +156,7 @@ export default function TransactionHistoryPage() {
           <CardDescription>
             Current Balance:{" "}
             <span className="font-bold text-foreground">
-              ${(targetUser?.balance || 0).toFixed(2)}
+              ₹{(targetUser?.balance || 0).toFixed(2)}
             </span>
           </CardDescription>
         </CardHeader>
@@ -200,7 +200,7 @@ export default function TransactionHistoryPage() {
                         tx.type === "payment" ? "text-destructive" : ""
                       }`}
                     >
-                      {tx.type === "payment" ? "-" : "+"}$
+                      {tx.type === "payment" ? "-" : "+"}₹
                       {tx.amount.toFixed(2)}
                     </TableCell>
                   </TableRow>
