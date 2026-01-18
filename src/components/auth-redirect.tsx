@@ -48,15 +48,33 @@ export default function AuthRedirect() {
       return;
     }
 
-    // User is logged in, redirect from auth/public pages to dashboard
-    if (onAuthPage || onPublicPage) {
-      router.push('/dashboard');
+    // User is logged in
+    if (user) {
+      if (onAuthPage || onPublicPage) {
+        if (isAdmin) {
+          router.push('/admin');
+        } else {
+          router.push(`/transactions/${user.uid}`);
+        }
+        return;
+      }
+    }
+
+    // If a non-admin tries to access admin pages, redirect to their transactions page
+    if (!isAdmin && pathname.startsWith('/admin')) {
+        router.push(`/transactions/${user.uid}`);
+        return;
+    }
+    
+    // Allow admins to view any transaction pages.
+    if (isAdmin && pathname.startsWith('/transactions')) {
       return;
     }
 
-    // If a non-admin tries to access admin pages, redirect to dashboard
-    if (!isAdmin && pathname.startsWith('/admin')) {
-        router.push('/dashboard');
+    // If a regular user tries to access a transaction page that isn't theirs, redirect them to their own.
+    if (!isAdmin && pathname.startsWith('/transactions/') && !pathname.endsWith(`/${user.uid}`)) {
+        router.push(`/transactions/${user.uid}`);
+        return;
     }
 
   }, [user, isLoading, currentUserData, router, pathname]);
