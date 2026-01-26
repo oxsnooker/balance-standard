@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
+import { DeleteUserDialog } from "@/components/delete-user-dialog";
 
 interface UserAccount {
   id: string;
@@ -143,6 +144,7 @@ export default function AdminPage() {
                          <div className="flex gap-2 justify-end">
                             <Skeleton className="h-8 w-28" />
                             <Skeleton className="h-8 w-28" />
+                            <Skeleton className="h-8 w-24" />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -167,6 +169,7 @@ export default function AdminPage() {
                           </Link>
                         </Button>
                          <UpdateBalanceDialog userId={u.id} userEmail={u.displayName || u.email} />
+                         <DeleteUserDialog userId={u.id} userEmail={u.displayName || u.email} disabled={u.id === user?.uid} />
                       </div>
                     </TableCell>
                   </TableRow>
