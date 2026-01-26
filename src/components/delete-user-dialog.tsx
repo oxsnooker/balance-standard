@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 
@@ -31,6 +32,8 @@ export function DeleteUserDialog({
   disabled = false,
 }: DeleteUserDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -56,6 +59,16 @@ export function DeleteUserDialog({
     }
   }
 
+  const handleActionClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setError("");
+    if (password !== "172089") {
+      event.preventDefault();
+      setError("Incorrect password.");
+      return;
+    }
+    handleDelete();
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -74,10 +87,29 @@ export function DeleteUserDialog({
             authentication system. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        <div className="space-y-2">
+          <Input
+            type="password"
+            placeholder="Enter password to confirm deletion"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel
+            disabled={loading}
+            onClick={() => {
+              setPassword("");
+              setError("");
+            }}
+          >
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
+            onClick={handleActionClick}
             disabled={loading}
             className="bg-destructive hover:bg-destructive/90"
           >
