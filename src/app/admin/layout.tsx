@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LockKeyhole, Shield } from "lucide-react";
+import { Circle, Shield } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
 
 export default function AdminLayout({
@@ -12,8 +12,8 @@ export default function AdminLayout({
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <Link href="/admin" className="mr-6 flex items-center space-x-2">
-            <LockKeyhole className="h-6 w-6 text-primary" />
-            <span className="font-bold">AuthConnect</span>
+            <Circle className="h-6 w-6 text-primary" />
+            <span className="font-bold">THE OX SNOOKER</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link

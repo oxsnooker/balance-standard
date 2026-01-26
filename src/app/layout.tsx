@@ -5,8 +5,8 @@ import { FirebaseClientProvider } from "@/firebase/client-provider";
 import AuthRedirect from "@/components/auth-redirect";
 
 export const metadata: Metadata = {
-  title: "AuthConnect",
-  description: "Secure and seamless authentication for your applications.",
+  title: "THE OX SNOOKER",
+  description: "Welcome to THE OX SNOOKER.",
 };
 
 export default function RootLayout({
