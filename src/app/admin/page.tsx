@@ -9,6 +9,8 @@ import {
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import Link from "next/link";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -41,6 +43,9 @@ interface UserAccount {
 export default function AdminPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [visibleBalances, setVisibleBalances] = useState<
+    Record<string, boolean>
+  >({});
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
@@ -51,7 +56,10 @@ export default function AdminPage() {
   }>(userDocRef);
 
   const usersCollectionRef = useMemoFirebase(
-    () => (currentUserData?.role === "admin" ? collection(firestore, "users") : null),
+    () =>
+      currentUserData?.role === "admin"
+        ? collection(firestore, "users")
+        : null,
     [firestore, currentUserData]
   );
 
@@ -59,6 +67,13 @@ export default function AdminPage() {
     useCollection<UserAccount>(usersCollectionRef);
 
   const isAdmin = currentUserData?.role === "admin";
+
+  const toggleBalanceVisibility = (userId: string) => {
+    setVisibleBalances((prev) => ({
+      ...prev,
+      [userId]: !prev[userId],
+    }));
+  };
 
   if (isCurrentUserLoading) {
     return (
@@ -91,7 +106,9 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Please contact an administrator if you believe this is a mistake.</p>
+          <p>
+            Please contact an administrator if you believe this is a mistake.
+          </p>
         </CardContent>
       </Card>
     );
@@ -132,19 +149,22 @@ export default function AdminPage() {
                         <Skeleton className="h-4 w-40" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-24" />
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-8 w-8" />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Skeleton className="h-4 w-20" />
                       </TableCell>
-                       <TableCell>
+                      <TableCell>
                         <Skeleton className="h-4 w-32" />
                       </TableCell>
                       <TableCell className="text-right">
-                         <div className="flex gap-2 justify-end">
-                            <Skeleton className="h-8 w-28" />
-                            <Skeleton className="h-8 w-28" />
-                            <Skeleton className="h-8 w-24" />
+                        <div className="flex gap-2 justify-end">
+                          <Skeleton className="h-8 w-28" />
+                          <Skeleton className="h-8 w-28" />
+                          <Skeleton className="h-8 w-24" />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -153,12 +173,39 @@ export default function AdminPage() {
               ) : (
                 users?.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.displayName || u.email}</TableCell>
-                    <TableCell className="font-semibold text-accent">₹{(u.balance || 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">
+                      {u.displayName || u.email}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-accent w-24 truncate">
+                          {visibleBalances[u.id]
+                            ? `₹${(u.balance || 0).toFixed(2)}`
+                            : "₹ •••.••"}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => toggleBalanceVisibility(u.id)}
+                        >
+                          {visibleBalances[u.id] ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">
+                            {visibleBalances[u.id]
+                              ? "Hide balance"
+                              : "Show balance"}
+                          </span>
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {u.role}
                     </TableCell>
-                     <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {new Date(u.registrationDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
@@ -168,8 +215,15 @@ export default function AdminPage() {
                             Transactions
                           </Link>
                         </Button>
-                         <UpdateBalanceDialog userId={u.id} userEmail={u.displayName || u.email} />
-                         <DeleteUserDialog userId={u.id} userEmail={u.displayName || u.email} disabled={u.id === user?.uid} />
+                        <UpdateBalanceDialog
+                          userId={u.id}
+                          userEmail={u.displayName || u.email}
+                        />
+                        <DeleteUserDialog
+                          userId={u.id}
+                          userEmail={u.displayName || u.email}
+                          disabled={u.id === user?.uid}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
