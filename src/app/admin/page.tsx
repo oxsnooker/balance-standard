@@ -31,6 +31,15 @@ import { Button } from "@/components/ui/button";
 import { UpdateBalanceDialog } from "@/components/update-balance-dialog";
 import { DeleteUserDialog } from "@/components/delete-user-dialog";
 import { UpdateRoleDialog } from "@/components/update-role-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface UserAccount {
   id: string;
@@ -50,6 +59,12 @@ export default function AdminPage() {
   const [visibleActions, setVisibleActions] = useState<
     Record<string, boolean>
   >({});
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [currentUserForActions, setCurrentUserForActions] = useState<
+    string | null
+  >(null);
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
@@ -79,11 +94,36 @@ export default function AdminPage() {
     }));
   };
 
-  const toggleActionVisibility = (userId: string) => {
-    setVisibleActions((prev) => ({
-      ...prev,
-      [userId]: !prev[userId],
-    }));
+  const handleVisibilityClick = (userId: string) => {
+    if (visibleActions[userId]) {
+      // If actions are visible, hide them without password
+      setVisibleActions((prev) => ({ ...prev, [userId]: false }));
+    } else {
+      // If actions are hidden, show password dialog to unhide
+      setCurrentUserForActions(userId);
+      setShowPasswordDialog(true);
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (password === "2089") {
+      if (currentUserForActions) {
+        setVisibleActions((prev) => ({
+          ...prev,
+          [currentUserForActions]: true,
+        }));
+      }
+      handleDialogClose();
+    } else {
+      setPasswordError("Incorrect password.");
+    }
+  };
+
+  const handleDialogClose = () => {
+    setShowPasswordDialog(false);
+    setPassword("");
+    setPasswordError("");
+    setCurrentUserForActions(null);
   };
 
   if (isCurrentUserLoading) {
@@ -249,7 +289,7 @@ export default function AdminPage() {
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9"
-                          onClick={() => toggleActionVisibility(u.id)}
+                          onClick={() => handleVisibilityClick(u.id)}
                         >
                           {visibleActions[u.id] ? (
                             <EyeOff className="h-4 w-4" />
@@ -271,6 +311,47 @@ export default function AdminPage() {
           </Table>
         </CardContent>
       </Card>
+      <Dialog
+        open={showPasswordDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleDialogClose();
+          }
+          setShowPasswordDialog(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enter Password</DialogTitle>
+            <DialogDescription>
+              To show sensitive actions, please enter the password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handlePasswordSubmit();
+                }
+              }}
+            />
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDialogClose}>
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordSubmit}>Submit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
