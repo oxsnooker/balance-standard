@@ -47,6 +47,9 @@ export default function AdminPage() {
   const [visibleBalances, setVisibleBalances] = useState<
     Record<string, boolean>
   >({});
+  const [visibleActions, setVisibleActions] = useState<
+    Record<string, boolean>
+  >({});
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
@@ -71,6 +74,13 @@ export default function AdminPage() {
 
   const toggleBalanceVisibility = (userId: string) => {
     setVisibleBalances((prev) => ({
+      ...prev,
+      [userId]: !prev[userId],
+    }));
+  };
+
+  const toggleActionVisibility = (userId: string) => {
+    setVisibleActions((prev) => ({
       ...prev,
       [userId]: !prev[userId],
     }));
@@ -165,8 +175,7 @@ export default function AdminPage() {
                         <div className="flex gap-2 justify-end">
                           <Skeleton className="h-8 w-28" />
                           <Skeleton className="h-8 w-28" />
-                          <Skeleton className="h-8 w-32" />
-                          <Skeleton className="h-8 w-24" />
+                          <Skeleton className="h-9 w-9" />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -221,17 +230,38 @@ export default function AdminPage() {
                           userId={u.id}
                           userEmail={u.displayName || u.email}
                         />
-                        <UpdateRoleDialog
-                          userId={u.id}
-                          userEmail={u.displayName || u.email}
-                          currentRole={u.role}
-                          disabled={u.id === user?.uid}
-                        />
-                        <DeleteUserDialog
-                          userId={u.id}
-                          userEmail={u.displayName || u.email}
-                          disabled={u.id === user?.uid}
-                        />
+                        {visibleActions[u.id] && (
+                          <>
+                            <UpdateRoleDialog
+                              userId={u.id}
+                              userEmail={u.displayName || u.email}
+                              currentRole={u.role}
+                              disabled={u.id === user?.uid}
+                            />
+                            <DeleteUserDialog
+                              userId={u.id}
+                              userEmail={u.displayName || u.email}
+                              disabled={u.id === user?.uid}
+                            />
+                          </>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9"
+                          onClick={() => toggleActionVisibility(u.id)}
+                        >
+                          {visibleActions[u.id] ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">
+                            {visibleActions[u.id]
+                              ? "Hide sensitive actions"
+                              : "Show sensitive actions"}
+                          </span>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
